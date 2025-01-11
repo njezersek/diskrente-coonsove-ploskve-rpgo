@@ -2,8 +2,9 @@ import './main.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls';
 import { DragControls } from 'three/addons/controls/DragControls';
-import { Matrix, matrix, zeros } from "mathjs";
+import { matrix, zeros } from "mathjs";
 import { construct_mask, coons } from './coons';
+import { GUI } from 'dat.gui'
 
 
 
@@ -25,7 +26,7 @@ scene.add(ambientLight);
 
 function createControlPoints(m: number, n: number, top_left: THREE.Vector3, top_right: THREE.Vector3, bottom_left: THREE.Vector3, bottom_right: THREE.Vector3) {
   const geometry = new THREE.SphereGeometry(0.02);
-  const material = new THREE.MeshPhongMaterial({ color: 0xffffff });
+  const material = new THREE.MeshBasicMaterial({ color: 0xff00ffff });
   
   const controlPoints = {
     m, n,
@@ -67,12 +68,15 @@ const coonsMesh = new THREE.Mesh(
   new THREE.MeshPhongMaterial({
     color: 0xffffff,
     side: THREE.DoubleSide,
-    wireframe: false,
-    wireframeLinewidth: 1,
-    wireframeLinecap: 'round',
-    wireframeLinejoin: 'round'
+    specular: 0xffffff,
+    shininess: 10,
   })
 )
+const coonsWireframe = new THREE.Mesh(
+  new THREE.BufferGeometry(),
+  new THREE.MeshBasicMaterial({color: 0xff00ffff, wireframe: true})
+)
+scene.add(coonsWireframe)
 scene.add(coonsMesh)
 
 // Add grid floor
@@ -84,6 +88,17 @@ scene.add(gridHelper);
 const renderer = new THREE.WebGLRenderer( { antialias: true } );
 renderer.setAnimationLoop( animate );
 document.body.appendChild( renderer.domElement );
+
+// Add the GUI
+const coonsParameters = {
+  alpha: -0.25,
+  beta: 0.5
+}
+const gui = new GUI();
+const cubeFolder = gui.addFolder('Discrete Coons Patch');
+cubeFolder.add(coonsParameters, 'alpha', -1, 1).name('Alpha');
+// cubeFolder.add(coonsParameters, 'beta', -1, 1).name('Beta');
+cubeFolder.open();
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.mouseButtons = {
@@ -135,7 +150,7 @@ function animate( time: number ) {
   let my = matrix(points_y)
   let mz = matrix(points_z)
 
-  const mask = construct_mask(-0.25, 0.5)
+  const mask = construct_mask(coonsParameters.alpha, 0.25 - coonsParameters.alpha)
   coons(mx, mask)
   coons(my, mask)
   coons(mz, mask)
@@ -169,6 +184,7 @@ function animate( time: number ) {
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
 
+  coonsWireframe.geometry = geometry;
   coonsMesh.geometry = geometry;
 
   renderer.render(scene, camera);
