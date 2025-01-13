@@ -21,8 +21,8 @@ export function coons(points: Matrix, mask: Matrix){
 	const A = zeros([unknowns, unknowns]) as number[][]
 	const B = zeros([unknowns]) as number[]
 
-	const cell_to_col = (i: number, j: number) => (i-1)*(m-2) + (j-1); 
-	const col_to_cell = (c: number) => [Math.floor(c / (m-2))+1, (c % (m-2))+1]
+	const cell_to_col = (i: number, j: number) => (i-1)*(n-2) + (j-1); 
+	const col_to_cell = (c: number) => [Math.floor(c / (n-2))+1, (c % (n-2))+1]
 
 	for(let i=1; i<m-1; i++){
 		for(let j=1; j<n-1; j++){
