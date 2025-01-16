@@ -70,6 +70,7 @@ const coonsMesh = new THREE.Mesh(
     side: THREE.DoubleSide,
     specular: 0xffffff,
     shininess: 10,
+    flatShading: true
   })
 )
 const coonsWireframe = new THREE.Mesh(
