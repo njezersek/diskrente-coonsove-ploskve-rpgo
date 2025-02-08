@@ -1,0 +1,394 @@
+\documentclass{beamer}
+
+\usetheme{Madrid}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+
+\usepackage{media9}
+\usepackage{tikz}
+
+\def\mathdefault#1{#1}
+\everymath=\expandafter{\the\everymath\displaystyle}
+
+\title{Diskretne Coonsove ploskve}
+\author{Rok Filipovič, Jernej Jezeršek}
+\date{15. januar 2025}
+
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\begin{frame}{Pregled}
+    \tableofcontents
+\end{frame}
+
+% \begin{frame}{GIF Animation Example}
+%     \includemedia[
+%         activate=onclick,
+%         width=0.8\linewidth,
+%         height=0.6\linewidth,
+%         addresource=your_animation.mp4,
+%         flashvars={source=your_animation.mp4}
+%     ]{}{VPlayer.swf}
+% \end{frame}
+
+\section{Coonsove ploskve}
+\begin{frame}{Coonsove ploskve}
+    \begin{block}{(Zvezna) Coonsova ploskev}
+    Ploskev, ki interpolira robne krivulje
+    $\mathbf{x}(0, v),$ $ \mathbf{x}(1, v),$ $ \mathbf{x}(u, 0), $ $\mathbf{x}(u, 1):$
+        \begin{align*}
+            \mathbf{x}(u, v) &= (1 - u)\mathbf{x}(0, v) + u\mathbf{x}(1, v) \\
+            &\quad + (1 - v)\mathbf{x}(u, 0) + v\mathbf{x}(u, 1) \\
+            &\quad - 
+            \begin{bmatrix}
+                1 - u & u
+            \end{bmatrix}
+            \begin{bmatrix}
+                \mathbf{x}(0, 0) & \mathbf{x}(0, 1) \\
+                \mathbf{x}(1, 0) & \mathbf{x}(1, 1)
+            \end{bmatrix}
+            \begin{bmatrix}
+                1 - v \\
+                v
+            \end{bmatrix}
+        \end{align*}
+    \end{block}
+\end{frame}
+
+\begin{frame}{Temeljni načeli}
+    \begin{block}{Načelo minimuma}
+        \begin{flalign*}&
+            min\left(\int_U \textbf{x}_{uv}^2 \, dS\right)&
+        \end{flalign*}
+        
+    Euler-Lagrangeeva PDE: $\textbf{x}_{uuvv} = 0$
+    \end{block}
+
+    
+\end{frame}
+
+\begin{frame}{Temeljni načeli}
+    \begin{columns}
+        \column{0.5\textwidth}
+    
+        \begin{block}{Načelo trajnosti}
+            Coonsova ploskev podogrodja = originalna Coonsova ploskev zožana na podogodje
+        \end{block}
+    
+        \column{0.5\textwidth}
+        \begin{figure}
+            \centering
+            \includegraphics[width=0.95\linewidth]{permanence_principle_coons.jpg}
+        \end{figure}
+    \end{columns}
+
+\end{frame}
+
+
+\section{Diskretne Coonsove ploskve}
+\begin{frame}{Diskretne Coonsove ploskve}
+
+    \[
+    \begin{matrix}
+        \mathbf{b}_{00} & \mathbf{b}_{01} & \dots &\mathbf{b}_{0n} \\
+        \mathbf{b}_{10} &   & &\mathbf{b}_{1n} \\
+        \vdots &  &  & \vdots \\
+        \mathbf{b}_{m0} & \mathbf{b}_{m1} & \dots &\mathbf{b}_{mn} \\
+    \end{matrix}
+    \]
+
+    \begin{block}{Diskretna Coonsova ploskev}
+    Notranje točke, ki ustrezajo diskretnemu ogrodju 
+    \begin{align*}
+        \mathbf{b}_{i,j} &= (1 - i/m)\mathbf{b}_{0,j} + \frac{i}{m}\mathbf{b}_{m,j} \\
+        &\quad + (1 - j/n)\mathbf{b}_{i,0} + \frac{j}{n}\mathbf{b}_{i,n} \\
+        &\quad - 
+        \begin{bmatrix}
+            1 - i/m & i/m
+        \end{bmatrix}
+        \begin{bmatrix}
+            \mathbf{b}_{0,0} & \mathbf{b}_{0,n} \\
+            \mathbf{b}_{m,0} & \mathbf{b}_{m,n}
+        \end{bmatrix}
+        \begin{bmatrix}
+            1 - j/n \\
+            j/n
+        \end{bmatrix}
+    \end{align*}
+
+    \end{block}
+\end{frame}
+
+\begin{frame}{Temeljni načeli}
+    \begin{block}{Načelo minimuma}
+        \begin{flalign*}&
+            min\left(\sum_{i=0}^{m-1} \sum_{j=0}^{n-1} (\Delta^{1,1} \mathbf{b}_{i,j})^2\right)&
+        \end{flalign*}
+        
+    \end{block}
+
+    \vspace{0.6cm}
+
+    \begin{block}{Načelo trajnosti}
+        Zožitev na 3x3:
+        \begin{align*}
+        \mathbf{b}_{i,j} &= -\frac{1}{4} \left( \mathbf{b}_{i-1,j+1} + \mathbf{b}_{i+1,j+1} + \mathbf{b}_{i-1,j-1} + \mathbf{b}_{i+1,j-1} \right) \\
+        &\quad + \frac{1}{2} \left( \mathbf{b}_{i,j+1} + \mathbf{b}_{i-1,j} + \mathbf{b}_{i+1,j} + \mathbf{b}_{i,j-1} \right)
+    \end{align*}
+    \end{block}
+    
+\end{frame}
+
+\begin{frame}{Diskretna Euler-Lagrangeeva PDE}
+    
+    \begin{figure}
+        \centering
+        \includegraphics[width=1\linewidth]{maska.png}
+    \end{figure}
+
+    % \begin{align*}
+    %     b_{i,j} &= \frac{1}{4} \times 
+    %     \begin{bmatrix}
+    %         -1 & 2 & -1 \\
+    %         2 &  \bullet &  2 \\
+    %         -1 & 2 & -1
+    %     \end{bmatrix}
+    % \end{align*}
+    
+\end{frame}
+
+\section{Trajnostne ploskve}
+\begin{frame}{Trajnostne ploskve}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \begin{figure}
+            \centering
+            \includegraphics[width=1\linewidth]{permanence_patch.jpg}
+        \end{figure}        
+        \column{0.5\textwidth}
+        \begin{itemize}
+            \setlength{\itemsep}{10pt}
+            \item $\alpha + \beta = 1/4$
+            \item DCP: $\alpha = -1/4$
+            \item Različne oblike
+        \end{itemize}
+    \end{columns}
+    
+\end{frame}
+
+\begin{frame}{Diskretni Laplaceov operator}
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.75\linewidth]{laplaceov_operator.png}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Končna maska}
+    \begin{columns}
+        \column{0.75\textwidth}
+        \[\mathbf{b}_{i,j} = \frac{1}{4} \left( e \times \begin{matrix}
+            -1 & 2 & -1 \\ 2 & \bullet & 2 \\ -1 & 2 & -1
+        \end{matrix}
+        + (1-e) \times \begin{matrix}
+            0 & 1 & 0 \\ 1 & \bullet & 1 \\ 0 & 1 & 0
+        \end{matrix}
+        \right)\]
+        \column{0.25\textwidth}
+        \[\begin{matrix}
+            e \in [0, 1] \\
+            (\alpha = - e/4) \\
+            \alpha \in [-1/4, 0]
+        \end{matrix}\]
+    \end{columns}
+
+    \vspace{1cm}
+
+    \begin{center}
+        \begin{quote}
+            \textit{"... no geometry-independent combination
+of Euler–Lagrange and Laplace masks will be sufficient for all geometries."}
+        \end{quote}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Računanje trajnostne ploskve}
+    % Tuakja bi rad povedal kako se v praksi izračuna te ploskve
+    \begin{itemize}
+        \item Za mrežo velikosti $(m+1)\times (n+1)$ imamo $(m-1)(n-1)$ neznank.
+        \item Za vsako neznanko skonstruiramo linearno enačbo
+    \end{itemize}
+
+    \begin{columns}
+        \begin{column}{0.3\textwidth}
+        \begin{center}
+        
+        \begin{tikzpicture}[scale=0.8, yscale=-1]
+            % Draw the grid for the image
+            \def\N{5}
+            \def\M{5}
+            \foreach \x in {0, ...,\numexpr\N-1} {
+                \foreach \y in {0, ...,\numexpr\M-1} {
+                    \draw[gray] (\x,\y) rectangle (\x+1,\y+1);
+                    \node at (\x+0.4,\y+0.4) {\small $b_{\y, \x}$};
+                }
+            }
+            \foreach \x in {1, ..., \numexpr\N-2} {
+                \foreach \y in {1, ..., \numexpr\M-2} {
+                    \draw[gray, fill=white] (\x,\y) rectangle (\x+1,\y+1);
+                    \node[gray] at (\x+0.4,\y+0.4) {\small $b_{\y, \x}$};
+                }
+            }
+            
+            % Highlight a 3x3 region for convolution
+            \draw[thick, blue] (0,0) rectangle (3,3);
+            
+            % Place the kernel over the highlighted region
+            \node[blue] at (0+0.6,0+0.8) {\small $\alpha$};
+            \node[blue] at (1+0.6,0+0.8) {\small $\beta$};
+            \node[blue] at (2+0.6,0+0.8) {\small $\alpha$};
+            \node[blue] at (0+0.6,1+0.8) {\small $\beta$};
+            \node[blue] at (1+0.6,1+0.8) {\small $\bullet$};
+            \node[blue] at (2+0.6,1+0.8) {\small $\beta$};
+            \node[blue] at (0+0.6,2+0.8) {\small $\alpha$};
+            \node[blue] at (1+0.6,2+0.8) {\small $\beta$};
+            \node[blue] at (2+0.6,2+0.8) {\small $\alpha$};
+        \end{tikzpicture}
+        \end{center}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+        \begin{align*}
+            \alpha b_{0,0} + \beta b_{0,1} + \alpha b_{0,2} &\\
+             + \beta b_{1,0} - b_{1,1} + \beta b_{0,2} & \\
+             + \alpha b_{2,0} + \beta b_{2,1} + \alpha b_{2,2} & = 0
+        \end{align*}
+
+        \begin{multline*}
+            - b_{1,1} + \beta b_{0,2} + \beta b_{2,1} + \alpha b_{2,2} =  \\
+            - \alpha b_{0,0} - \beta b_{0,1} - \alpha b_{0,2} - \beta b_{1,0} - \alpha b_{2,0}
+        \end{multline*}
+        \end{column}
+    \end{columns}
+    
+\end{frame}
+
+\begin{frame}{Računanje trajnostne ploskve}
+    \begin{multline*}
+        0 = \sum_{x=0}^2\sum_{y=0}^2 b_{i-y-1, j-x-1} k_{y, x} \ \forall i = 1, \dots, m-1\ \forall j = 1, \dots, n-1
+    \end{multline*}
+    \begin{align*}
+        \begin{bmatrix}
+            k_{0,0} & k_{0,1} & k_{0,2} \\
+            k_{1,0} & k_{1,1} & k_{1,2} \\
+            k_{2,0} & k_{2,1} & k_{2,2} \\
+        \end{bmatrix} =
+        \begin{bmatrix}
+            \alpha & \beta & \alpha \\
+            \beta & -1 & \beta \\
+            \alpha & \beta & \alpha \\
+        \end{bmatrix}
+    \end{align*}
+
+    \begin{itemize}
+        \item Linearne enačbe shranimo v matrični obliki $Ax = b$
+        \item V trodimenzionalnem primeru so $b_{i,j}$ vektorji in moramo izračunati vsako komponento posebej.
+    \end{itemize}
+\end{frame}
+
+\section{Primeri}
+
+\begin{frame}{Primeri}
+    \begin{center}
+    \resizebox*{!}{20em}{\input{img/example.pgf}}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Interaktivna vizualizacija}
+    \begin{figure}
+        \centering
+        \includegraphics[width=1\linewidth]{img/interactive.png}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Determinanta matrike $A$}
+    \begin{center}
+    \resizebox*{!}{20em}{\input{img/determinants.pgf}}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Občutljivost matrike $A$}
+    \begin{center}
+    \resizebox*{!}{20em}{\input{img/conditions.pgf}}
+    \end{center}
+\end{frame}
+
+\section{Optimizacija}
+
+\begin{frame}{Iskanje $\alpha$}
+    \begin{itemize}
+        \item Izbira $\alpha$ močno vpliva na obliko ploskve
+        \item Ne obstaja ena sama vrednost $\alpha$, ki bi dala dobre rezltate za vse izbire točk.
+    \end{itemize}
+    
+    \vspace{1cm}
+    
+    \begin{center}
+        \begin{quote}
+            \textit{"Good here refers to the traditional designer’s paradigm that the interior of a surface should not have different
+shape characteristics than those implied by the boundary curves."}
+        \end{quote}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Matematična definicija dobre ploskve}
+\begin{itemize}
+    \item Definiramo funkcijo, ki nam pove v kakšni meri oblika ploskve odstopa od oblike, ki jo implicirajo robne krivulje
+    \item Vsako robno krivuljo primerjamo z vzporenimi notranjimi krivuljami
+    \item Seštevamo razlike v kotih
+    \[ s_{i,j} = \frac{b_{i+1,j} - b_{i,j}}{\|b_{i+1,j} - b_{i,j}\|} \quad \forall i = 0, ..., m-1 \ \forall j = 0, ..., n \]
+    \[ \varphi_{i,j} = \arccos\left(\langle s_{i,j}, s_{i+1,j}\rangle\right) \]
+\end{itemize}
+    
+\end{frame}
+
+\begin{frame}{Matematična definicija dobre ploskve}
+    \begin{center}
+    \resizebox*{!}{13em}{\input{img/error.pgf}}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Primeri}
+    \begin{center}
+    \resizebox*{!}{13em}{\input{img/opt1_alpha.pgf}}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Primeri}
+    \begin{center}
+    \resizebox*{!}{13em}{\input{img/opt1_cmp.pgf}}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Primeri}
+    \begin{center}
+    \resizebox*{!}{13em}{\input{img/opt2_alpha.pgf}}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Primeri}
+    \begin{center}
+    \resizebox*{!}{13em}{\input{img/opt2_cmp.pgf}}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Viri}
+
+\begin{itemize}
+    \item G. Farin, D. Hansford: Discrete Coons patches, Computer Aided Geometric Design 16, 1999, 691–700.
+\end{itemize}
+    
+\end{frame}
+
+\end{document}

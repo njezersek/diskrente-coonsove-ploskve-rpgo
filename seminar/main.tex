@@ -1,0 +1,403 @@
+%\documentclass[10pt]{article}             % en stolpec
+\documentclass[twocolumn, 10pt]{article}    % dva stolpca
+
+\usepackage[utf8]{inputenc}
+\usepackage[margin=0.7in]{geometry}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}  
+\usepackage{hyperref}
+\usepackage[font={small,it}]{caption}
+\usepackage[slovene]{babel}
+\usepackage{bm}
+
+\usepackage{tikz}
+\def\mathdefault#1{#1} % tole rabijo python pgf exporti
+\everymath=\expandafter{\the\everymath\displaystyle}
+
+\title{Diskretne Coonsove ploskve}
+\author{Rok Filipovič, Jernej Jezeršek}
+\date{15. januar 2025}
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Coonsove ploskve\cite{coons1967} so ene najprepoznavnejših ploskev, ki interpolirajo dane robne krivulje. 
+Namesto na celotne robne krivulje se lahko osredotočimo le na Bézierjev kontrolni poligon, saj analogna interpolacija teh točk privede do enake končne ploskve. 
+V tem delu predstavimo zvezne in diskretne Coonsove ploskve ter njihove lastnosti, jih posplošimo na t.i. trajnostne ploskve (angl. Permanence patches \cite{FARIN1999691}), na koncu pa predstavimo metodo, s katero optimiziramo ključni parameter trajnostnih ploskev in z njo nadgradimo dosedanja dela na tem področju.
+\end{abstract}
+
+\section{Uvod}
+% motivacija: zakaj so take ploskve uporabne
+% kaj bomo povedali v članku
+Prileganje ploskve štirim podanim robnim krivuljam je eden izmed najstarejših izzivov RPGO.
+Pogosta rešitev so Coonsove ploskve.
+Naše delo se začne s teoretičnim ozadjem, kjer definiramo in predstavimo lastnosti, ki veljajo za osnovne, zvezne, Coonsove ploskve. 
+Te lastnosti v naslednjem poglavju razširimo na diskretne Coonsove ploskve, za katere se izkaže, da jih lahko predstavimo s sistemom enačb, ki je bločno tridiagonalen. 
+Če se osredotočimo na vsako notranjo točko ploskve posebej, opazimo, da lahko vpliv sosedov prilagajamo in s tem dobimo drugačne oblike ploskev, ki prav tako interpolirajo robne točke.
+Na ta način preidemo do trajnostnih ploskev, ki jih opišemo v tretjem podpoglavju teoretičnega dela.
+
+Sledi praktični del, kjer se osredotočimo na primere in implementacijo metod, ki smo jih opisali pred tem.
+Predstavimo sistem enačb, ki je ključen za enostavno implementacijo in ki privede do bločne tridiagonalne matrike.
+Rešitev tega sistem nam določa notranje točke končne ploskve.
+Velja \cite{FARIN1999691}, da za različne vrednosti parametra dobimo različno dobre ploskve.
+Naslednje poglavje popisuje, kako smo se spopadli z izzivom iskanja ploskve, ki se najbolje ujema glede na t.i. paradigmo oblikovalca.
+Delo zaključimo s predstavitvijo interaktivne vizualizacije, s pomočjo katere hitro opazimo, da je sistem enačb nestabilen in da moramo vrednost parametra izbirati previdno.
+
+% \section{Teoretično ozadje}
+% To poglavje služi za predstavitev in razlago temeljnih konceptov, ki so pomembni za razumevanje nadaljnjega, prak\-ti\-čne\-ga dela. 
+% Začnemo s Coonsovimi ploskvami, ki jih prevedemo iz zveznih na diskretne, slednje pa posplošimo v trajnostne ploskve, ki nam omogočajo več svobode pri izbiri oblike končne ploskve.
+
+\section{Coonsove ploskve}
+Imejmo robne krivulje, ki (brez škode za splošnost) predstavljajo rob enotskega kvadrata.
+Označimo jih z $\mathbf{x}(0, v),$ $ \mathbf{x}(1, v),$ $ \mathbf{x}(u, 0) $ in  $\mathbf{x}(u, 1).$
+Ploskev, ki interpolira te krivulje, imenujemo Coonsova ploskev in ima enačbo 
+\begin{align}
+    \mathbf{x}(u, v) &= (1 - u)\mathbf{x}(0, v) + u\mathbf{x}(1, v) \nonumber \\
+    &\quad + (1 - v)\mathbf{x}(u, 0) + v\mathbf{x}(u, 1) \nonumber \\
+    &\quad - 
+    \begin{bmatrix}
+        1 - u & u
+    \end{bmatrix}
+    \begin{bmatrix}
+        \mathbf{x}(0, 0) & \mathbf{x}(0, 1) \\
+        \mathbf{x}(1, 0) & \mathbf{x}(1, 1)
+    \end{bmatrix}
+    \begin{bmatrix}
+        1 - v \\
+        v
+    \end{bmatrix}.
+    \label{eq:coons}
+\end{align}
+
+Zanjo velja\cite{nielson1978} načelo minimuma, kar pomeni, da minimizira integral 
+\begin{equation}
+    \int_U \textbf{x}_{uv}^2 \, dS,
+\end{equation}
+kjer $U$ predstavlja območje, t.j., enotski kvadrat, $\textbf{x}_{uv}$ pa mešani odvod v smeri $x$ in $y$.
+Vsaka ploskev $\mathbf{x}(u,v)$, ki minimizira tak integral, zadošča Euler-Lagrangeevi parcialni diferencialni enačbi (PDE)
+\begin{equation}
+    \textbf{x}_{uuvv} = 0.
+    \label{eq:ELPDE}
+\end{equation}
+
+Coonsove ploskve ustrezajo tudi načelu trajnosti.
+Naj dve točki $(u_0, v_0)$ in $(u_1, v_1)$ določata pravokotnik $P$, ki je vsebovan v enotskem kvadratu. 
+Projecirajmo $\partial P$ na Coonsovo ploskev, ki jo dodelimo originalnemu ogrodju nad celotnim enotskim kvadratom. 
+Zanima nas povezava med originalno ploskvijo, ki jo zožimo na $P$, in Coonsovo plokvijo, ki jo dobimo kot rezultat enačbe \ref{eq:coons} na projekciji $\partial P$.
+Izkaže se, da sta enaki.
+Primer načela trajnosti je prikazan na sliki \ref{fig:permanence_principle}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{img/permanence_principle_coons.jpg}
+    \caption{Primer načela trajnosti za neko poljubno Coonsovo ploskev razpeto čez robne krivulje nad enotskim krogom. Razvidno je, da je Coonsova ploskev razpeta čez rob podpodročja enaka originalni, zožani na to podpodročje.}
+    \label{fig:permanence_principle}
+\end{figure}
+
+\section{Diskretne Coonsove ploskve}
+Namesto robnih krivulj iz prejšnjega podpoglavja se lahko osredotočimo le na diskretne točke, ki predstavljajo Bézierjev kontrolni poligon.
+Imejmo sledečo tabelo točk $\mathbf{b}_{i,j}; \;i=0,...,m, \;j=0,...,n:$
+\[
+\begin{matrix}
+    \mathbf{b}_{00} & \mathbf{b}_{01} & \dots &\mathbf{b}_{0n} \\
+    \mathbf{b}_{10} &   & &\mathbf{b}_{1n} \\
+    \vdots &  &  & \vdots \\
+    \mathbf{b}_{m0} & \mathbf{b}_{m1} & \dots &\mathbf{b}_{mn} \\
+\end{matrix},
+\]
+ki definira diskretno ogrodje.
+Za notranje točke $\mathbf{b}_{i,j}$, ki so definirane z diskretno obliko enačbe \ref{eq:coons}, velja:
+
+\begin{align}
+        \mathbf{b}_{i,j} &= (1 - i/m)\mathbf{b}_{0,j} + \frac{i}{m}\mathbf{b}_{m,j} \nonumber \\
+        &\quad + (1 - j/n)\mathbf{b}_{i,0} + \frac{j}{n}\mathbf{b}_{i,n} \nonumber \\
+        &\quad - 
+        \begin{bmatrix}
+            1 - i/m & i/m
+        \end{bmatrix}
+        \begin{bmatrix}
+            \mathbf{b}_{0,0} & \mathbf{b}_{0,n} \\
+            \mathbf{b}_{m,0} & \mathbf{b}_{m,n}
+        \end{bmatrix}
+        \begin{bmatrix}
+            1 - j/n \\
+            j/n
+        \end{bmatrix},
+    \end{align}
+za $0 < i < m$ in $0 < j < n.$
+
+Podobno kot v prejšnjem podpoglavju, diskretne Coonsove ploskve izpolnjujejo načeli minimuma in trajnosti.
+Prvo se v diskretnem smislu prevede na minimiziranje vsote 
+\begin{equation}
+    \sum_{i=0}^{m-1} \sum_{j=0}^{n-1} (\Delta^{1,1} \mathbf{b}_{i,j})^2,
+\end{equation}
+kjer $\Delta^{1,1} \mathbf{b}_{i,j} = \mathbf{b}_{i+1,j+1} - \mathbf{b}_{i+1,j} - \mathbf{b}_{i,j+1} + \mathbf{b}_{i,j}.$
+
+Načelo trajnosti nam omogoča, da se osredotočimo na ogrodje velikosti $3 \times 3$, kjer predpostavljamo, da je osem točk na robu poznanih, edina notranja pa ne.
+Na ta način dosežemo direktno povezavo med notranjo točko $\mathbf{b}_{i,j}$ in njenimi sosednjimi točkami.
+Velja:
+\begin{multline}
+    \mathbf{b}_{i,j} = -\frac{1}{4} \left( \mathbf{b}_{i-1,j+1} + \mathbf{b}_{i+1,j+1} + \mathbf{b}_{i-1,j-1} + \mathbf{b}_{i+1,j-1} \right) \\
+     + \frac{1}{2} \left( \mathbf{b}_{i,j+1} + \mathbf{b}_{i-1,j} + \mathbf{b}_{i+1,j} + \mathbf{b}_{i,j-1} \right).
+\end{multline}
+Slednje lahko zapišemo z masko oziroma shemo:
+\begin{align}
+    \mathbf{b}_{i,j} &= \frac{1}{4} \times \ 
+    \begin{matrix}
+        -1 & 2 & -1 \\
+        2 &  \bullet &  2 \\
+        -1 & 2 & -1
+    \end{matrix},
+    \label{eq:coons_sistem}
+\end{align}
+kar je ravno diskretna shema Euler-Lagrangeeve PDE \ref{eq:ELPDE}.
+
+Z uporabo sheme \ref{eq:coons_sistem} dobimo $(n-1) \times (m-1)$ enačb za vseh $(n-1) \times (m-1)$ neznanih notranjih točk.
+To pomeni, da lahko diskretno Coonsovo ploskev izračunamo kot rešitev linearnega sistema, kjer so točke v notranjosti vezane ena na drugo, tiste ob robnih točkah pa dodatno še nanje, ki določajo desno stran sistema.  
+
+\section{Trajnostne ploskve}
+
+Računanje diskretne Coonsove ploskve s sistemom je zamuden proces.
+Vendar pa nam daje vpogled v možno izboljšavo oziroma posplošitev.
+Predstavimo masko \ref{eq:coons_sistem} v obliki
+\begin{align}
+    \mathbf{b}_{i,j} &= 
+    \begin{matrix}
+        \alpha & \beta & \alpha \\
+        \beta &  \bullet &  \beta \\
+        \alpha& \beta & \alpha
+    \end{matrix},
+    \label{eq:permanence_sistem}
+\end{align}
+kjer $\alpha = -0.25$ in $\beta = 0.5$.
+Zazdi se, da bi vrednosti $\alpha$ in $\beta$ lahko poljubno spreminjali.
+Pozorni moramo biti, da velja $4\alpha + 4\beta = 1$ oziroma $\alpha + \beta = 1/4$, da ohranimo baricentrično oziroma afino kombinacijo.
+Na ta način tvorimo družino ploskev za vse različne parametre $\alpha$, ki ji pravimo trajnostne ploskve.
+
+Kot vemo, diskretne Coonsove ploskve predstavljajo zgornjo shemo, ko je $\alpha = -0.25.$
+Izkaže se, da ploskev za tako vrednosti prostega parametra ne povzroči vedno prileganja, ki bi ga uporabnik želel.
+Spreminjanje $\alpha$ pa nam omogoča, da obliko ploskve prilagajamo in dosežemo bolj želene rezultate. 
+V poglavju \ref{optimizacija} predstavimo, kako algoritmično določimo optimalno vrednost $\alpha$, da bo oblika ploskve čim bolj podobna originalnim robnim krivuljam.
+
+Izbira vrednosti $\alpha = 0$ nas privede do maske, ki je enaka
+\begin{equation}
+    \mathbf{b}_{i,j} = \frac{1}{4} \times \ \begin{matrix}
+            0 & 1 & 0 \\ 1 & \bullet & 1 \\ 0 & 1 & 0
+        \end{matrix}.
+\end{equation}
+To je ravno shema diskretnega Laplaceovega operatorja, oziroma diskretne Laplaceove PDE,
+\begin{equation}
+    \mathbf{x}_{uu} + \mathbf{x}_{vv} = 0.
+\end{equation}
+
+Izkaže se, da je maska \ref{eq:permanence_sistem} kombinacija Euler-Lagrangeeve in Laplaceove enačbe,
+\begin{equation}
+    \mathbf{b}_{i,j} = \frac{1}{4} \left( e \times \ \begin{matrix}
+            -1 & 2 & -1 \\ 2 & \bullet & 2 \\ -1 & 2 & -1
+        \end{matrix}
+        \ +  \ (1-e) \times \ \begin{matrix}
+            0 & 1 & 0 \\ 1 & \bullet & 1 \\ 0 & 1 & 0
+        \end{matrix}
+        \right).
+\end{equation}
+Od tod se zazdi, da bi bile smiselne vrednosti $e$ z intervala $[0,1]$, oziroma $\alpha \in [-0.25, 0]$, saj velja $\alpha = -e/4$.
+Kot bomo videli v nadaljevanju, te vrednosti ne zagotavljajo vedno optimalne ploskve, zato moramo pogosto izbirati tudi druge $\alpha$. 
+Vendar pa moramo biti ob tem previdni, saj pogosto privede do nestabilnosti.
+
+\section{Konstrukcija sistema enačb}
+V praksi imamo podane robne točke $\mathbf{b}_{i,j} \in \mathbb{R}^3$ in želimo izračunati vrednosti notranjih točk. Vse operacije predstavljene v nadaljevanju delamo po komponentah -- za vsako dimenzijo posebej. Z neodeblejeno oznako $b_{i,j}$ označimo eno komponento vektorja $\mathbf{b}_{i,j}$.
+
+Za vsako notranjo točko $b_{i,j}$ dobimo eno linearno enačbo. Lahko si predstavljamo, da masko poravnamo z notranjo točko in zmnožimo istoležne elemente. Pri tem robne točke obravnavamo kot konstante, notranje pa kot spremenljivke. Primer je prikazan na sliki~\ref{fig:mreza_maska}.
+\begin{figure}
+    \centering
+    \begin{tikzpicture}[scale=0.8, yscale=-1]
+        % Draw the grid for the image
+        \def\N{5}
+        \def\M{5}
+        \foreach \x in {0, ...,\numexpr\N-1} {
+            \foreach \y in {0, ...,\numexpr\M-1} {
+                \draw[gray] (\x,\y) rectangle (\x+1,\y+1);
+                \node at (\x+0.4,\y+0.4) {\small $b_{\y, \x}$};
+            }
+        }
+        \foreach \x in {1, ..., \numexpr\N-2} {
+            \foreach \y in {1, ..., \numexpr\M-2} {
+                \draw[gray, fill=white] (\x,\y) rectangle (\x+1,\y+1);
+                \node[gray] at (\x+0.4,\y+0.4) {\small $b_{\y, \x}$};
+            }
+        }
+        
+        % Highlight a 3x3 region for convolution
+        \draw[thick, blue] (0,0) rectangle (3,3);
+        
+        % Place the kernel over the highlighted region
+        \node[blue] at (0+0.6,0+0.8) {\small $\alpha$};
+        \node[blue] at (1+0.6,0+0.8) {\small $\beta$};
+        \node[blue] at (2+0.6,0+0.8) {\small $\alpha$};
+        \node[blue] at (0+0.6,1+0.8) {\small $\beta$};
+        \node[blue] at (1+0.6,1+0.8) {\small $\bullet$};
+        \node[blue] at (2+0.6,1+0.8) {\small $\beta$};
+        \node[blue] at (0+0.6,2+0.8) {\small $\alpha$};
+        \node[blue] at (1+0.6,2+0.8) {\small $\beta$};
+        \node[blue] at (2+0.6,2+0.8) {\small $\alpha$};
+    \end{tikzpicture}
+    \caption{Ilustracija konstrukcije enačbe za element $b_{0,1}$.}
+    \label{fig:mreza_maska}
+\end{figure}
+
+
+\section{Lastnosti sistema}
+% matrika je bločno 3 diagonalna
+% determinanta in občutljvost matrike v odvosnosti od alpha
+% eksplozija
+\begin{figure}
+    \centering
+    \resizebox*{!}{7cm}{\input{img/matrix.pgf}}
+    \caption{Neničelni elementi matrike sistema s 64 neznanimi točkami.}
+    \label{fig:matrika}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \resizebox*{!}{7cm}{\input{img/example.pgf}}
+    \caption{Primer trajnostne ploskve z različnimi vrednostmi parametra $\alpha$.}
+    \label{fig:alfe}
+\end{figure}
+
+Za mrežo velikosti $(m+1) \times (n+1)$ imamo $(m-1) \times (n-1)$ neznank in prav toliko enačb. Enačbe zložimo v matriko, katere stolpci predstavljajo neznanke, vrstice pa enačbe ki jim pripadajo. Opazimo, da je matrika bločno tridiagonalna z bloki velikosti enaki številu neznank (slika~\ref{fig:matrika}). Za dano vrstico so v bloku na diagonali elementi, ki so v srednji vrstici maske. Na naddiagonali in poddiagonali pa so elementi, ki so v spodnji in zgornji vrstici maske.
+
+Sistem lahko rešimo z uporabo LU razcepa in dobimo vektor, iz katerega razberemo vrednosti neznank.
+
+\begin{figure}
+    \centering
+    \resizebox*{!}{7cm}{\input{img/explosion.pgf}}
+    \caption{Primer eksplozije. Robne točke sestavljajo kvadrat z dolžino stranice $2$ in majhno perturbacijo v eni izmed robnih točk. Na sliki vidimo, da izračunana ploskev močno odstopa od robnih točk. ($\alpha = -0.81$)}
+    \label{fig:eksplozija}
+\end{figure}
+
+Pri eksperimentiranju različnih vrednosti $\alpha$ na intervalu $[-1, 1]$, smo opazili primere, kjer izračunana ploskev eksplodira -- izračunane točke so glede na razdaljo med robnimi točkami veliko bolj oddaljene (slika~\ref{fig:eksplozija}). Zato smo izračunali vrednost determinante (slika~\ref{fig:determinante}) in občutljivost (slika~\ref{fig:obcutljivosti}) matrike sistema v odvisnosti od parametra $\alpha$. Vidimo, da je matrika izven varnega intervala $[-0.25, 0]$ precej nestabilna, kar bi lahko pojasnilo eksplozijo ploskve. 
+
+Problem eksplozije smo izračunali še v eksaktni aritmetiki racionalnih števil in dobili zelo podoben rezultat. To kaže na dejstvo, da za eksplozijo ni kriva le nestabilnost matrike temveč se pojavi v naravi problema.
+
+
+\begin{figure}
+    \centering
+    \resizebox*{!}{7cm}{\input{img/determinants.pgf}}
+    \caption{Determinante matrike $A$ v odvisnosti od parametra $\alpha$ za različne velikosti mreže.}
+    \label{fig:determinante}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \resizebox*{!}{7cm}{\input{img/conditions.pgf}}
+    \caption{Občutljivost matrike $A$ v odvisnosti od parametra $\alpha$ za različne velikosti mreže.}
+    \label{fig:obcutljivosti}
+\end{figure}
+
+\section{Optimizacija parametra $\alpha$}
+\label{optimizacija}
+Če želimo dobiti dobro ploskev, moramo za vsako postavitev robnih točk in velikosti mreže izbrati nov parameter $\alpha$.
+To pa je empirično precej težko, saj $\alpha$ na intervalu $[-1, 1]$ večkrat navidezno naključno povzroči eksplozijo ploskve. Zato smo razvili algoritem, ki določi optimalno vrednost parametra $\alpha$.
+
+Farin in Hansford v svojem članku \cite{FARIN1999691} opišeta dobro ploskev v tradicionalnem oblikovalskem pomenu, kjer želimo, da se notranjost ploskve ne razlikuje od oblike, ki jo podajajo robne krivulje.
+
+To idejo smo uporabili in definirali funkcijo, ki za dano ploskev izračuna vrednost napake prileganja robnim krivuljam. Funkcija izračuna napako kot razliko v vektorju kotov robne krivulje in vsakega vzporednega rebra (slika~\ref{fig:rebra}).
+
+Za $j$-to navpično rebro (glede na mrežo) definiramo vektor kotov $\varphi_j = (\varphi_{0,j}, \dots, \varphi_{m-1, j})$, kot kote med zaporednimi segmenti $\mathbf{s_{i,j}}$:
+\begin{equation}
+    \mathbf{s}_{i,j} = \frac{\mathbf{b}_{i+1,j} - \mathbf{b}_{i,j}}{\|\mathbf{b}_{i+1,j} - \mathbf{b}_{i,j}\|} \quad \forall i = 0, ..., m-1 \\
+\end{equation}
+\begin{equation}
+    \varphi_{i,j} = \arccos\left(\langle \mathbf{s}_{i,j}, \mathbf{s}_{i+1,j}\rangle\right)
+\end{equation}
+
+Za $i$-to vodoravno rebro je definicija podobna.
+\begin{equation}
+    \bar{\mathbf{s}}_{i,j} = \frac{\mathbf{b}_{i,j+1} - \mathbf{b}_{i,j}}{\|\mathbf{b}_{i,j+1} - \mathbf{b}_{i,j}\|} \quad \forall j = 0, ..., n-1 \\
+\end{equation}
+\begin{equation}
+    \bar{\varphi}_{i,j} = \arccos\left(\langle \bar{\mathbf{s}}_{i,j}, \bar{\mathbf{s}}_{i,j+1}\rangle\right)
+\end{equation}
+
+Končno vrednost napake $E$ dobimo tako, da seštejemo razlike med štirimi robnimi rebri in njim vzporednimi rebri.
+\begin{align}
+    E &= \sum_{i=1}^{m-1} \| \bar{\varphi}_0 - \bar{\varphi}_i \| + \| \bar{\varphi}_m - \bar{\varphi}_i \|  \\ \nonumber
+    &+ \sum_{j=1}^{n-1} \| \bar{\varphi}_0 - \bar{\varphi}_j \| + \| \bar{\varphi}_n - \bar{\varphi}_j \|
+\end{align}
+
+Optimalno vrednost $\alpha$ poiščemo tako, da interval $[-1, 1]$ diskretiziramo, za vsako vrednost izračunamo ploskev in njeno napako. Nato izberemo $\alpha$ z najmanjšo pripadajočo napako.
+
+\begin{figure}
+    \centering
+    \resizebox*{!}{3.5cm}{\input{img/error.pgf}}
+    \caption{Ilustracija robne krivulje in vzporednih reber.}
+    \label{fig:rebra}
+\end{figure}
+
+Metodo smo preizkusili na enaki obliki robne krivulje kot v članku \cite{FARIN1999691} in za optimalno $\alpha$ izračunali zelo podobno vrednost, kot so jo v članku določili empirično. 
+Na sliki~\ref{fig:opt1_alpha} je prikazana vrednost napake v odvisnosti od $\alpha$, na sliki~\ref{fig:opt1_cmp} pa je primerjava med diskretno Coonsovo ploskvijo in trajnostno ploskvijo z optimalno vrednostjo $\alpha$.
+
+Našo metodo smo preizkusili še na podobnem primeru, ki je prikazan na sliki~\ref{fig:opt2_alpha}~in~\ref{fig:opt2_cmp}.
+
+% definicija dobre ploskve
+% matematična definicija
+% implementacija
+
+
+\begin{figure}
+    \centering
+    \resizebox*{!}{6cm}{\input{img/opt1_alpha.pgf}}
+    \caption{Vrednost funkcije napake v odvisnosti od parametra $\alpha$.}
+    \label{fig:opt1_alpha}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \resizebox*{!}{3.5cm}{\input{img/opt1_cmp.pgf}}
+    \caption{Primerjava Coonsove ploskve s trajnostno ploskvijo z optimalnim $\alpha$ parametrom.}
+    \label{fig:opt1_cmp}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \resizebox*{!}{6cm}{\input{img/opt2_alpha.pgf}}
+    \caption{Vrednost funkcije napake v odvisnosti od parametra~$\alpha$.}
+    \label{fig:opt2_alpha}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \resizebox*{!}{3.5cm}{\input{img/opt2_cmp.pgf}}
+    \caption{Primerjava Coonsove ploskve s trajnostno ploskvijo z optimalnim $\alpha$ parametrom.}
+    \label{fig:opt2_cmp}
+\end{figure}
+
+
+
+\section{Implementacija}
+% nekaj malega o načinu implementacije interaktivne vizualizacije
+Večino primerov smo implementirali v programskem jeziku Python in vizualizirali z uporabo knjižnice Matplotlib. Poleg tega smo sprogramirali interaktivno vizualizacijo, ki uporabniku omogoča premikanje kamere in robnih točk v prostoru ter spreminjanje parametra $alpha$ z drsnikom (slika~\ref{fig:interactive}). Za implementacijo smo uporabili programski jezik TypeScript, knjižnico MathJS za delo z matrikami in knjižnico Three.js za prikaz rezultatov v 3D prostoru.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{img/interactive.png}
+    \caption{Posnetek zaslona interaktivne vizualizacije.}
+    \label{fig:interactive}
+\end{figure}
+
+\section{Zaključek}
+V tem delu smo predstavili Coonsove ploskve in njihove lastnosti. 
+Začeli smo z zveznimi ploskvami ter predstavili ključni načeli, načelo minimuma in načelo trajnosti. 
+Nato smo jih prevedli na diskretno obliko in pokazali, kako se načeli odražata v tem primeru.
+Načelo trajnosti na diskretnih Coonsovih ploskvah nas je pripeljalo do sistema z $(n-1)\times(m-1)$ enačbami in ravno toliko neznankami, ki smo ga posplošili ter tako dobili trajnostne ploskve.
+Slednje so bile temelj praktičnega dela, ki smo ga začeli s predstavitvijo bločno tridiagonalnega sistema, naprej pa razvili v pregled primerov za različne vrednosti parametra $\alpha$.
+Opazili smo tudi, da iz $\alpha \notin [-0.25,0]$ pogosto sledi nestabilnost ne glede na postavitev točk originalnega ogrodja.
+Od tod smo predstavili svojo razširitev, kako algoritmično določiti vrednost $\alpha$, da je oblika ploskve čim bolj podobna obliki robnih krivulj, za konec pa smo predstavili še interaktivno vizualizacijo trajnostnih ploskev, ki smo jo razvili in omogoča, da uporabnik sam določi robne točke ter vrednost $\alpha$ in zraven opazuje, kako spremembe vplivajo na vztrajnostno ploskev.
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+
+\end{document}
